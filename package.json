@@ -1,13 +1,15 @@
 {
   "name": "auth-system",
   "version": "1.0.0",
+  "type": "module",
   "description": "\"# Auth System\"",
-  "main": "index.js",
+  "main": "dist/app.ts",
   "scripts": {
     "dev": "tsx watch src/app.ts",
-  "build": "tsc",
-  "start": "node dist/app.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "start": "node dist/app.ts",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
@@ -21,11 +23,20 @@
     "pg": "^8.22.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.0",
+    "@commitlint/config-conventional": "^21.2.0",
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.1.0",
     "@types/pg": "^8.20.0",
+    "@typescript-eslint/eslint-plugin": "^8.62.1",
+    "@typescript-eslint/parser": "^8.62.1",
+    "eslint": "^10.6.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.6",
+    "husky": "^9.1.7",
+    "prettier": "^3.9.4",
     "ts-node-dev": "^2.0.0",
     "tsx": "^4.23.0",
     "typescript": "^6.0.3"

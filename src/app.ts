@@ -15,7 +15,6 @@ app.use(
     credentials: true, // Crucial for handling cookies later!
   })
 );
-const badVariable: any = 'this breaks the rule';
 
 // Health Check Route
 app.get('/health', (req: Request, res: Response) => {
@@ -23,11 +22,11 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 // Global Error Handler Middleware
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong internally!' });
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server is running on http://localhost:${PORT}`);
+  console.info(`🚀 Server is running on http://localhost:${PORT}`);
 });
