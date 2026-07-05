@@ -5,14 +5,17 @@ import cors from 'cors';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(express.json());
-app.use(cors({
-  origin: true, // We will update this later once the frontend is integrated
-  credentials: true // Crucial for handling cookies later!
-}));
+app.use(
+  cors({
+    origin: true, // We will update this later once the frontend is integrated
+    credentials: true, // Crucial for handling cookies later!
+  })
+);
+const badVariable: any = 'this breaks the rule';
 
 // Health Check Route
 app.get('/health', (req: Request, res: Response) => {
