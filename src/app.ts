@@ -1,8 +1,12 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 
 dotenv.config();
+
+import './config/db.js';
+import { initDatabase } from './config/initDb.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -29,4 +33,9 @@ app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
 
 app.listen(PORT, () => {
   console.info(`🚀 Server is running on http://localhost:${PORT}`);
+});
+
+app.listen(PORT, async () => {
+  await initDatabase();
+  console.log(`🚀 Server is running on http://localhost:${PORT}`);
 });
