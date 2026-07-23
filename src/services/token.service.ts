@@ -23,4 +23,18 @@ export class TokenService {
   static generateRefreshToken(payload: TokenPayload): string {
     return jwt.sign(payload, this.REFRESH_SECRET, { expiresIn: '7d' });
   }
+
+  /**
+   * Verifies an Access Token's validity and decodes its payload data.
+   */
+  static verifyAccessToken(token: string): TokenPayload {
+    return jwt.verify(token, this.ACCESS_SECRET) as TokenPayload;
+  }
+
+  /**
+   * Verifies a Refresh Token's validity and decodes its payload data.
+   */
+  static verifyRefreshToken(token: string): TokenPayload {
+    return jwt.verify(token, this.REFRESH_SECRET) as TokenPayload;
+  }
 }

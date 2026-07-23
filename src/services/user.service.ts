@@ -43,4 +43,14 @@ export class UserService {
     const query = 'UPDATE users SET refresh_token = $1 WHERE id = $2;';
     await pool.query(query, [refreshToken, userId]);
   }
+
+  /**
+   * Look up an active user profile by their matching refresh token.
+   */
+  static async findUserByRefreshToken(refreshToken: string): Promise<UserRow | null> {
+    const query = 'SELECT * FROM users WHERE refresh_token = $1;';
+    const result = await pool.query<UserRow>(query, [refreshToken]);
+
+    return result.rows[0] || null;
+  }
 }

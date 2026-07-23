@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { UserService } from '../services/user.service.js';
 import { CryptoService } from '../services/crypto.service.js';
-import { TokenService } from '../services/token.service.js';
+import { TokenService, type TokenPayload } from '../services/token.service.js';
 
 export class AuthController {
   /**
@@ -106,6 +106,79 @@ export class AuthController {
           id: user.id,
           email: user.email,
         },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      // 1. Extract the secure refresh token from incoming cookies
+      const refreshToken = req.cookies?.refreshToken;
+
+      if (refreshToken) {
+        // 2. Look up the user matching this token in the database
+        // (We will write this database query helper in the next step!)
+        const user = await UserService.findUserByRefreshToken(refreshToken);
+        if (user) {
+          // 3. Revoke the token by wiping it from the database row
+          await UserService.updateRefreshToken(user.id, null);
+        }
+      }
+
+      // 4. Instruct the client to delete the cookie instantly
+      res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+      });
+
+      res.status(200).json({ message: 'Logged out successfully.' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async refresh(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const refreshToken = req.cookies?.refreshToken;
+
+      // 1. Verify a cookie actually exists in the request headers
+      if (!refreshToken) {
+        res.status(401).json({ error: 'Refresh token missing. Authentication required.' });
+        return;
+      }
+
+      // 2. Structurally verify the JWT signature and expiration
+      let decodedPayload: TokenPayload;
+      try {
+        decodedPayload = TokenService.verifyRefreshToken(refreshToken);
+        const { email, userId } = decodedPayload;
+        if (!email || !userId) {
+          res.status(401).json({ error: 'Invalid or expired refresh token.' });
+        }
+      } catch {
+        res.status(401).json({ error: 'Invalid or expired refresh token.' });
+        return;
+      }
+
+      // 3. Verify the token matches our database record for security validation
+      const user = await UserService.findUserByRefreshToken(refreshToken);
+      if (!user) {
+        res.status(401).json({ error: 'Token revoked or user session not found.' });
+        return;
+      }
+
+      // 4. Generate a fresh, new short-lived Access Token
+      const newAccessToken = TokenService.generateAccessToken({
+        userId: user.id,
+        email: user.email,
+      });
+
+      // 5. Send back the new token to the client
+      res.status(200).json({
+        accessToken: newAccessToken,
       });
     } catch (error) {
       next(error);
