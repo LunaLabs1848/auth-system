@@ -6,6 +6,7 @@ import cors from 'cors';
 import './config/db.js';
 import { initDatabase } from './config/initDb.js';
 import authRoutes from './routes/auth.routes.js'; // <-- Import your routes file
+import cookieParser from 'cookie-parser';
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use(
     credentials: true,
   })
 );
+app.use(cookieParser());
 
 // Mount Routes
 app.use('/api/auth', authRoutes); // <-- All endpoints in authRoutes will now be prefixed with /api/auth
