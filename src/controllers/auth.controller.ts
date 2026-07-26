@@ -184,4 +184,34 @@ export class AuthController {
       next(error);
     }
   }
+
+  static async getProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      // req.user was populated by our requireAuth middleware!
+      const userId = req.user?.userId;
+
+      if (!userId) {
+        res.status(401).json({ error: 'User context not found.' });
+        return;
+      }
+
+      // Fetch full user record from database (excluding password)
+      const user = await UserService.findUserByEmail(req.user!.email);
+
+      if (!user) {
+        res.status(404).json({ error: 'User profile not found.' });
+        return;
+      }
+
+      res.status(200).json({
+        user: {
+          id: user.id,
+          email: user.email,
+          createdAt: user.created_at,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
