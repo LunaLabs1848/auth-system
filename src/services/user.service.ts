@@ -3,7 +3,7 @@ import type { QueryResult } from 'pg';
 
 // Define a strict interface representing the structure of our User row in PostgreSQL
 export interface UserRow {
-  id: number;
+  id: string;
   email: string;
   password: string;
   refresh_token: string | null;
@@ -39,7 +39,7 @@ export class UserService {
   /**
    * Saves or updates a user's active refresh token in the database.
    */
-  static async updateRefreshToken(userId: number, refreshToken: string | null): Promise<void> {
+  static async updateRefreshToken(userId: string, refreshToken: string | null): Promise<void> {
     const query = 'UPDATE users SET refresh_token = $1 WHERE id = $2;';
     await pool.query(query, [refreshToken, userId]);
   }

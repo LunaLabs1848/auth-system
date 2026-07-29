@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { UserService } from '../services/user.service.js';
 import { CryptoService } from '../services/crypto.service.js';
 import { TokenService, type TokenPayload } from '../services/token.service.js';
+import { AuditService } from '../services/audit.service.js';
 
 export class AuthController {
   /**
@@ -61,8 +62,16 @@ export class AuthController {
   static async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { email, password } = req.body;
+      const ipAddress = req.ip;
+      const userAgent = req.headers['user-agent'];
 
       if (!email || !password) {
+        // 🚨 Record failed login attempt
+        await AuditService.logEvent({
+          action: 'LOGIN_FAILED',
+          ipAddress: ipAddress || null,
+          userAgent: userAgent || null,
+        });
         res.status(400).json({ error: 'Email and password are required.' });
         return;
       }
@@ -70,6 +79,12 @@ export class AuthController {
       // 1. Fetch user from database
       const user = await UserService.findUserByEmail(email);
       if (!user) {
+        // 🚨 Record failed login attempt
+        await AuditService.logEvent({
+          action: 'LOGIN_FAILED',
+          ipAddress: ipAddress || null,
+          userAgent: userAgent || null,
+        });
         // Use a generic message to prevent user enumeration attacks (security best practice)
         res.status(401).json({ error: 'Invalid email or password credentials.' });
         return;
@@ -78,6 +93,12 @@ export class AuthController {
       // 2. Validate password hash
       const isPasswordValid = await CryptoService.comparePassword(password, user.password);
       if (!isPasswordValid) {
+        // 🚨 Record failed login attempt
+        await AuditService.logEvent({
+          action: 'LOGIN_FAILED',
+          ipAddress: ipAddress || null,
+          userAgent: userAgent || null,
+        });
         res.status(401).json({ error: 'Invalid email or password credentials.' });
         return;
       }
@@ -98,6 +119,14 @@ export class AuthController {
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days matching refresh token lifespan
       });
 
+      // ✅ Record successful login attempt
+      await AuditService.logEvent({
+        userId: user.id.toString(),
+        action: 'LOGIN_SUCCESS',
+        ipAddress: ipAddress || null,
+        userAgent: userAgent || null,
+      });
+
       // 6. Send the short-lived access token in the JSON body
       res.status(200).json({
         message: 'Login successful!',
@@ -114,6 +143,8 @@ export class AuthController {
 
   static async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const ipAddress = req.ip;
+      const userAgent = req.headers['user-agent'];
       // 1. Extract the secure refresh token from incoming cookies
       const refreshToken = req.cookies?.refreshToken;
 
@@ -124,6 +155,14 @@ export class AuthController {
         if (user) {
           // 3. Revoke the token by wiping it from the database row
           await UserService.updateRefreshToken(user.id, null);
+
+          // ✅ Record logout event
+          await AuditService.logEvent({
+            userId: user.id.toString(),
+            action: 'LOGOUT',
+            ipAddress: ipAddress || null,
+            userAgent: userAgent || null,
+          });
         }
       }
 
