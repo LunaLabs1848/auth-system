@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # 1. Database Service
   postgres:
     image: postgres:16-alpine
     container_name: auth-postgres-db
@@ -13,6 +14,35 @@ services:
       - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d auth_db']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Express Backend Service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: auth_api
+    restart: always
+    ports:
+      - '3001:3001'
+    environment:
+      PORT: 3001
+      NODE_ENV: development
+      # Note: We use the Docker service name 'postgres' instead of 'localhost'
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: auth_user
+      DB_PASSWORD: auth_secure_password123
+      DB_NAME: auth_learning_db
+      JWT_ACCESS_SECRET: super_secret_access_key_12345
+      JWT_REFRESH_SECRET: super_secret_refresh_key_54321
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   postgres_data:
